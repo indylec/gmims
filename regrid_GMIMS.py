@@ -1,3 +1,4 @@
+
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,6 +9,7 @@ from astropy.io import fits
 
 #take command line input of fits file name
 input_file=sys.argv[1]
+nside=sys.argv[2]
 
 
 def getrdvec(header):
@@ -66,23 +68,22 @@ def regrid (nside, inmap, channel):
      #Pad the ends for better interpolation with 10 pixels on either side
     ttonechan=np.concatenate((ttonechan[:,-12:-2],ttonechan,ttonechan[:,1:11]),axis=1)
     ttlen=ttonechan.shape[1]
-    print 'Padded array is {!s} pixels wide'.format(ttlen)
+    #print 'Padded array is {!s} pixels wide'.format(ttlen)
 
      #Define HEALPix directions
-    x,y,z=hp.pixelfunc.pix2vec(nside,np.arange(npix),nest=True)
-    rdvecs=np.column_stack((x,y,z))
+    #x,y,z=hp.pixelfunc.pix2vec(nside,np.arange(npix),nest=False)
+    #rdvecs=np.column_stack((x,y,z))
 
     #get HEALPix grid in 2D angles
-    theta,phi=hp.pixelfunc.vec2ang(rdvecs)
+    theta,phi=hp.pixelfunc.pix2ang(nside,np.arange(npix))
     dec=(np.pi*0.5-theta)*180.0/np.pi
-    ra=phi*360.0/(np.pi*2.0)-360
+    ra=phi*360.0/(np.pi*2.0)
 
     print 'cdelt1:',cdelt1
 
     #get pixel values to interpolate at
-    rapix = (ra - crval1)/cdelt1+crpix1-1+10
-    if np.amin(rapix) < 10:
-        rapix[np.where(rapix<10)] += ttlen -1
+    rapix = (ra - crval1)/cdelt1+crpix1-1
+    
     decpix= (dec-crval2)/cdelt2 + crpix2-1
 
     #print 'first 100 values of rapix:',rapix[0:100]
@@ -118,8 +119,8 @@ def regrid (nside, inmap, channel):
     return temptt
 
 
-map=regrid(64,input_file,0)
-hp.mollview(map,nest=True)
+map=regrid(nside,input_file,0)
+hp.mollview(map)
 plt.show()
 
     
