@@ -4,12 +4,15 @@ import matplotlib.pyplot as plt
 import healpy as hp
 from astropy.io import ascii
 
-pixelno=float(sys.argv[1])
+pixelno=int(sys.argv[1])
+coeffs_in=sys.argv[2]
+hi_in=sys.argv[3]
+lo_in=sys.argv[4]
 
-coeffs=ascii.read('../txt_data/offsets_slopes_100_nospur.txt', names=['pixno','slope','intercept','c95sl','c95sh','c95il','c95ih'])
+coeffs=ascii.read(coeffs_in, guess=False, delimiter=' ')
 
 a=coeffs['slope']
-b=coeffs['intercept']
+b=coeffs['offset']
 
 print a[pixelno],b[pixelno]
 #a_inv=coeffs['a_inv']
@@ -20,12 +23,12 @@ if np.isnan(a[pixelno] or b[pixelno] or a_inv[pixelno] or b_inv[pixelno]):
     
 
 
-gmims0=hp.read_map('../fits/gmims_masked_final_spur.fits',nest=True)
+gmims0=hp.read_map(hi_in,nest=True)
 gmims_unseen=np.where(gmims0==hp.UNSEEN)
 gmims0[gmims_unseen]=float('NaN')
 
 
-haslam=hp.read_map('../fits/haslam_masked_final_spur.fits',nest=True)
+haslam=hp.read_map(lo_in,nest=True)
 haslam_unseen=np.where(haslam==hp.UNSEEN)
 haslam[haslam_unseen]=float('NaN')
 
@@ -42,10 +45,14 @@ axislimits2=[np.nanmin(gmims0_div[pixelno,:])-0.1,np.nanmax(gmims0_div[pixelno,:
 #print axislimits
 
 
-x1=np.arange(20000,60000,500)
+x1=np.linspace(10,60,220)
 x2=np.arange(-2,4,0.1)
 pix=np.arange(0,3145728,1.0)
 pix_div=np.reshape(pix,(192,16384))
+
+line=x1*a[pixelno]+b[pixelno]
+
+#print x1[100],line[100]
 
 
 plt.title('TT plot for pixel number '+str(int(pixelno)))
@@ -53,9 +60,10 @@ plt.title('TT plot for pixel number '+str(int(pixelno)))
 plt.axis(axislimits1)
 plt.scatter(haslam_div[pixelno,:],gmims0_div[pixelno,:],c=pix_div[pixelno,:],marker='+',s=200, cmap='hsv',linewidths=4)
 plt.plot(x1,a[pixelno]*x1+b[pixelno],'k-')
+
 cbar=plt.colorbar()
 cbar.set_label('HEALPix nested pixel number')
-plt.xlabel('Haslam amplitude (mK)')
+plt.xlabel('Haslam amplitude (K)')
 plt.ylabel('GMIMS amplitude (K)')
 
 #plt.subplot(122)

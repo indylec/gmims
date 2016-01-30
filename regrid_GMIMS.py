@@ -4,12 +4,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import healpy as hp
 from scipy import ndimage
-from scipy import interpolate as ip
+#from scipy import interpolate as ip
 from astropy.io import fits
 
 #take command line input of fits file name
 input_file=sys.argv[1]
-nside=sys.argv[2]
+nside=int(sys.argv[2])
+stokes=sys.argv[3]
+bin=int(sys.argv[4])
+gal=int(sys.argv[5])
 
 
 def getrdvec(header):
@@ -42,8 +45,8 @@ def getrdvec(header):
 
     
     
-
-def regrid (nside, inmap, channel):
+def regrid(nside,inmap):
+#def regrid (nside, inmap, channel):
     #regrids the given channel of the GMIMS map into HEALPix format using interpolation
 
     npix=hp.pixelfunc.nside2npix(nside)
@@ -61,9 +64,17 @@ def regrid (nside, inmap, channel):
     crpix2=header0['crpix2']
     cdelt2=header0['cdelt2']
     
-    ttonechan=tt[channel,:,:]
+    #if header0['NAXIS3']==3:
+    #    ttonechan=tt[channel,:,:]
+    #    print 'Regridding channel number {!s}.'.format(channel)
+    
+    #else:
+    #ttonechan=tt[0,:,:]
+    ttonechan=tt
+    if stokes=='stockert':
+        ttonechan=ttonechan/1000. #stockert only
 
-    print 'Regridding channel number {!s}.'.format(channel)
+   
 
      #Pad the ends for better interpolation with 10 pixels on either side
     ttonechan=np.concatenate((ttonechan[:,-12:-2],ttonechan,ttonechan[:,1:11]),axis=1)
@@ -78,8 +89,13 @@ def regrid (nside, inmap, channel):
     theta,phi=hp.pixelfunc.pix2ang(nside,np.arange(npix))
     dec=(np.pi*0.5-theta)*180.0/np.pi
     ra=phi*360.0/(np.pi*2.0)
+    if gal:
+        ra[np.where(ra>180.)]-=360. #this is used for the galactic maps
 
-    print 'cdelt1:',cdelt1
+    #print ra
+    #print dec
+
+    #print 'cdelt1:',cdelt1
 
     #get pixel values to interpolate at
     rapix = (ra - crval1)/cdelt1+crpix1-1
@@ -88,7 +104,7 @@ def regrid (nside, inmap, channel):
 
     #print 'first 100 values of rapix:',rapix[0:100]
     #print 'first 100 values of decpix:',decpix[0:100]
-    print 'ttonechan.shape is', ttonechan.shape
+    #print 'ttonechan.shape is', ttonechan.shape
 
     print "Interpolating..."
     #interpolate the tt map onto the healpix grid!
@@ -113,15 +129,52 @@ def regrid (nside, inmap, channel):
 
     
 
-    print 'temptt.shape is', temptt.shape
+    #print 'temptt.shape is', temptt.shape
     #print 'first 500 values of temptt:',temptt[0:500]
 
-    return temptt
+    r=hp.rotator.Rotator(coord=['G','C'])
+    theta_gal,phi_gal=r(theta,phi)
+    galpixnos=hp.pixelfunc.ang2pix(nside,theta_gal,phi_gal)
+
+    return temptt,galpixnos
 
 
-map=regrid(nside,input_file,0)
-hp.mollview(map)
-plt.show()
+
+map,galpixnos=regrid(nside,input_file)
+#map,galpixnos=regrid(nside,input_file, bin)
+
+if gal:
+    map_nest=hp.pixelfunc.reorder(map,r2n=True)
+   
+
+else:
+
+    map_gal=map[galpixnos] #comment out if the map is already in galactic
+    map_gal_nest=hp.pixelfunc.reorder(map_gal,r2n=True)
+    
+
+ 
+
+
+
+#outfile=stokes+'cube_bin_'+str(bin)+'_nest_'+str(nside)+'.fits'
+outfile=stokes+'_bin'+str(bin)+'_nest_'+str(nside)+'.fits'
+#outfile='stockert_healpix.fits'
+if gal:
+    hp.mollview(map_nest,nest=True,min=3.0, max=4.0)
+    plt.show()
+    hp.write_map(outfile,map_nest,nest=True)
+
+else:
+    hp.mollview(map_gal_nest,nest=True,min=3.0, max=4.0)
+    plt.show()
+    hp.write_map(outfile,map_gal_nest,nest=True)
+
+    
+print 'Wrote map to ',outfile
+
+
+
 
     
 

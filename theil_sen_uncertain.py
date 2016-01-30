@@ -35,39 +35,41 @@ def theil_sen(x,y, sample= "auto", n_samples = 1e7):
     if n < 100 or not sample:
         ix = np.argsort( x )
         slopes = np.empty( n*(n-1)*0.5 )
-        print '...calculating slopes...'
+       # print '...calculating slopes...'
         for c, pair in enumerate(itertools.combinations( range(n),2 ) ): #it creates range(n) =( 
             i,j = ix[pair[0]], ix[pair[1]]
             slopes[c] = slope( x[i], x[j], y[i],y[j] )
-        print 'slope min and max are:',np.amin(slopes),np.amax(slopes)
-        c95=np.percentile(slopes,(5,95))
+        #print 'slope min and max are:',np.amin(slopes),np.amax(slopes)
+        #c95=np.percentile(slopes,(5,95))
     else:
-        i1 = np.random.randint(0, n, n_samples)
-        i2 = np.random.randint(0, n, n_samples)
-        print '...checking for unwanted zeros...'
+        i1 = np.random.randint(0,int(n), int(n_samples))
+        i2 = np.random.randint(0,int(n), int(n_samples))
+        #print '...checking for unwanted zeros...'
         zero_check=np.where(np.abs((x[i1]-x[i2])) != 0)
         i1=i1[zero_check]
         i2=i2[zero_check]
-        print '...calculating slopes...'
+        #print '...calculating slopes...'
         slopes = slope( x[i1], x[i2], y[i1], y[i2] )
-        print 'slope min and max are:',np.amin(slopes),np.amax(slopes)
-        c95=np.percentile(slopes,(5,95))
+        #print 'slope min and max are:',np.amin(slopes),np.amax(slopes)
+        #c95=np.percentile(slopes,(5,95))
         #pdb.set_trace()
     
     slope_ = bottleneck.nanmedian( slopes )
-    print '...done! Now finding intercepts...'
+    #np.savetxt('slope_one_sample_test.txt',slopes)
+    #print '...done! Now finding intercepts...'
     #find the optimal b as the median of y_i - slope*x_i
     intercepts = np.empty( n )
     for c in xrange(n):
         intercepts[c] = y[c] - slope_*x[c]
+    #np.savetxt('intercept_one_sample_test.txt',slopes)
 
     
    
-    c95i=np.percentile(intercepts,(5,95))
+    #c95i=np.percentile(intercepts,(5,95))
    
     intercept_ = bottleneck.median( intercepts )
 
-    return np.array( [slope_,intercept_, c95[0],c95[1],c95i[0],c95i[1]] )
+    return np.array( [slope_,intercept_] )
         
         
         

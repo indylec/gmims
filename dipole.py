@@ -1,18 +1,26 @@
 import numpy as np
 import healpy as hp
-from astropy.io import *
-from math import *
+from astropy.io import ascii
+import matplotlib.pyplot as plt
+import sys
 
-data=ascii.read('offsets_slopes_100_nospur.txt', names=['pixno','slope','intercept','c95sl','c95sh','c95il','c95ih'])
+
+coeffs_in=sys.argv[1]
+gmims_in=sys.argv[2]
+
+
+data=ascii.read(coeffs_in, guess=False, delimiter=' ')
 
 
 npix=hp.nside2npix(512)
 
-pixels=data['pixno']
+pixels=data['pixelno']
 slope=data['slope']
-b=data['intercept']
+b=data['offset']
 
-good_regions=np.shape(data['pixno'])
+print b.shape
+
+good_regions=np.shape(data['pixelno'])
 
 ipix=np.arange(npix)
 theta,phi=hp.pix2ang(512,ipix,nest=True)
@@ -21,7 +29,7 @@ t_matrix=np.zeros((npix,4))
 
 for i in range (npix):
 
-    t_matrix[i,:]=[1,cos(phi[i])*sin(theta[i]),sin(theta[i])*sin(phi[i]),cos(theta[i])]
+    t_matrix[i,:]=[1,np.cos(phi[i])*np.sin(theta[i]),np.sin(theta[i])*np.sin(phi[i]),np.cos(theta[i])]
 
 
 
@@ -52,17 +60,45 @@ for ii in range(good_regions[0]):
 
 a_matrix=np.vstack([t0_i,t1_i,t2_i,t3_i]).T
 
+print a_matrix.shape
 
-intercept,res,rank,sing=np.linalg.lstsq(a_matrix,b)
+
+x,res,rank,sing=np.linalg.lstsq(a_matrix,b)
 
 
-print "The x-vector is: ",intercept
+print "The x-vector is: "
+print x
 
-gmims,gheader=hp.read_map('gmims_masked_final_spur.fits',nest=True,h=True)
+gmims,gheader=hp.read_map(gmims_in,nest=True,h=True)
 
-for i in range (npix):
-    gmims[i]=gmims[i]-(intercept[0]+cos(phi[i])*sin(theta[i])*intercept[1]+sin(theta[i])*sin(phi[i])*intercept[2]+cos(theta[i])*intercept[3])
+fit=np.empty(gmims.shape[0])
 
-hp.mollview(gmims,nest=True)
+fit=(x[0]+np.cos(phi)*np.sin(theta)*x[1]+np.sin(theta)*np.sin(phi)*x[2]+np.cos(theta)*x[3])
 
-hp.write_map('gmims_dipole_corrected_spur.fits',gmims,nest=True)
+gmims_corrected=gmims-fit
+
+corrected_out=coeffs_in.rsplit('.',1)[0]+'_corrected.fits'
+corrected_pdf=gmims_in.rsplit('.',1)[0]+'_corrected.pdf'
+
+fit_out=coeffs_in.rsplit('.',1)[0]+'_fit.fits'
+fit_pdf=gmims_in.rsplit('.',1)[0]+'_fit.pdf'
+
+fig1=plt.figure(figsize=(8,5),dpi=150)
+hp.mollview(fit,nest=True,fig=fig1.number, xsize=8*150,min=-1.,max=1.)
+#plt.savefig(fit_pdf,dpi=150, bbox_inches="tight")
+#plt.show()
+
+fig2=plt.figure(figsize=(8,5),dpi=150)
+hp.mollview(gmims_corrected,nest=True,fig=fig2.number, xsize=8*150,min=-1.,max=40.)
+#plt.savefig(corrected_pdf,dpi=150, bbox_inches="tight")
+#plt.show()
+
+hp.write_map(corrected_out,gmims_corrected,nest=True)
+hp.write_map(fit_out, fit, nest=True)
+
+coeffs_out=coeffs_in.rsplit('.',1)[0]+'_dipole.txt'
+
+f=open(coeffs_out,'a')
+f.write(str(x))
+f.close()
+
