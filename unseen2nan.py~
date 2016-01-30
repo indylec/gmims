@@ -1,0 +1,14 @@
+import numpy as np
+import healpy as hp
+import sys
+
+inmap=sys.argv[1]
+
+
+inm=hp.read_map(inmap,nest=True)
+
+inm[np.where(inm)==hp.UNSEEN]=np.nan
+
+outmap=inmap.rsplit('.',1)[0]+'_nans.txt'
+
+hp.write_map(outmap,inm)

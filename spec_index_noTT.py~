@@ -1,0 +1,39 @@
+import numpy as np
+import healpy as hp
+from astropy.io import ascii
+import sys
+import matplotlib.pyplot as plt
+
+
+
+#Compute classic spectral index, not from T-T plots
+
+
+hi_in=sys.argv[1]
+lo_in=sys.argv[2]
+hi_name=sys.argv[3]
+lo_name=sys.argv[4]
+
+
+
+g0_freq=1300855232.
+g8_freq=1689233472.
+haslam_freq=408000000.
+stockert_freq=1420000000.
+
+hi=hp.read_fits(hi_in,nest=True)
+lo=h.read_fits(low_in,nest=True)
+
+if hi_name==g0g:
+    hifreq=g0_freq
+elif hi_name==g8g:
+    hifreq=g8_freq
+elif hi_name==stcorr:
+    hifreq=stockert_freq
+
+if low_name==g0g:
+    lowfreq=g0_freq
+elif low_name==g8g:
+    lowfreq=g8_freq
+elif low_name==hcorr:
+    lowfreq=haslam_freq

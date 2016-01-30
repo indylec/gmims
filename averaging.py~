@@ -1,0 +1,1 @@
+#Somewhat different to averaging.pro -- this code averages the GMIMS data into the desired number of bins, keeping the number of channels per bin as close to equal as possible or discarding channels if you so choose.
