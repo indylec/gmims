@@ -10,36 +10,38 @@ from astropy.io import fits
 #take command line input of fits file name
 input_file=sys.argv[1]
 nside=int(sys.argv[2])
-stokes=sys.argv[3]
-bin=int(sys.argv[4])
-gal=int(sys.argv[5])
+zero_middle=int(sys.argv[3])
+scale=int(sys.argv[4])
+#stokes=sys.argv[3]
+#bin=int(sys.argv[4])
+#gal=int(sys.argv[5])
 
 
-def getrdvec(header):
-    naxis1=header['naxis1']
-    naxis2=header['naxis2']
-    crval1=header['crval1']
-    crpix1=header['crpix1']
-    cdelt1=header['cdelt1']
-    crval2=header['crval2']
-    crpix2=header['crpix2']
-    cdelt2=header['cdelt2']
+## def getrdvec(header):
+##     naxis1=header['naxis1']
+##     naxis2=header['naxis2']
+##     crval1=header['crval1']
+##     crpix1=header['crpix1']
+##     cdelt1=header['cdelt1']
+##     crval2=header['crval2']
+##     crpix2=header['crpix2']
+##     cdelt2=header['cdelt2']
     
-    ra=(arange(naxis1) + 1 - crpix1)*cdelt1 + crval1
-    dec=(arange(naxis2) + 1 - crpix2)*cdelt2 + crval2
+##     ra=(arange(naxis1) + 1 - crpix1)*cdelt1 + crval1
+##     dec=(arange(naxis2) + 1 - crpix2)*cdelt2 + crval2
 
-    #Create 2d theta & phi arrays (in colatitude and longitude, radians)
+##     #Create 2d theta & phi arrays (in colatitude and longitude, radians)
 
-    theta=np.pi/2.0-(dec*np.pi/180.0)
-    phi=ra*2.*np.pi/360.0+2.*np.pi
+##     theta=np.pi/2.0-(dec*np.pi/180.0)
+##     phi=ra*2.*np.pi/360.0+2.*np.pi
 
-    theta=np.tile(np.reshape(theta,(naxis2,1)),(1,naxis1))
-    phi=np.tile(phi,(naxis2,1))
+##     theta=np.tile(np.reshape(theta,(naxis2,1)),(1,naxis1))
+##     phi=np.tile(phi,(naxis2,1))
 
-    rdvec=hp.pixelfunc.ang2vec(theta,phi)
+##     rdvec=hp.pixelfunc.ang2vec(theta,phi)
 
 
-    return rdvec
+##     return rdvec
 
     
 
@@ -69,15 +71,18 @@ def regrid(nside,inmap):
     #    print 'Regridding channel number {!s}.'.format(channel)
     
     #else:
-    #ttonechan=tt[0,:,:]
-    ttonechan=tt
-    if stokes=='stockert':
+    if len(tt.shape)==3:
+        ttonechan=tt[0,:,:]
+    else:
+        ttonechan=tt
+    if scale:
         ttonechan=ttonechan/1000. #stockert only
 
    
 
      #Pad the ends for better interpolation with 10 pixels on either side
-    ttonechan=np.concatenate((ttonechan[:,-12:-2],ttonechan,ttonechan[:,1:11]),axis=1)
+    npad=10
+    ttonechan=np.concatenate((ttonechan[:,-1-npad:-1],ttonechan,ttonechan[:,1:1+npad]),axis=1)
     ttlen=ttonechan.shape[1]
     #print 'Padded array is {!s} pixels wide'.format(ttlen)
 
@@ -88,9 +93,9 @@ def regrid(nside,inmap):
     #get HEALPix grid in 2D angles
     theta,phi=hp.pixelfunc.pix2ang(nside,np.arange(npix))
     dec=(np.pi*0.5-theta)*180.0/np.pi
-    ra=phi*360.0/(np.pi*2.0)
-    if gal:
-        ra[np.where(ra>180.)]-=360. #this is used for the galactic maps
+    ra=phi*180.0/np.pi
+    if zero_middle:
+        ra[np.where(ra>180.)]-=360. #this is used for maps which define their coords as 180 to -180
 
     #print ra
     #print dec
@@ -98,7 +103,9 @@ def regrid(nside,inmap):
     #print 'cdelt1:',cdelt1
 
     #get pixel values to interpolate at
-    rapix = (ra - crval1)/cdelt1+crpix1-1
+    rapix = (ra - crval1)/cdelt1+crpix1-1+npad
+    if np.amin(rapix)<npad:
+        rapix[np.where(rapix<npad)] += naxis1 -1
     
     decpix= (dec-crval2)/cdelt2 + crpix2-1
 
@@ -108,9 +115,9 @@ def regrid(nside,inmap):
 
     print "Interpolating..."
     #interpolate the tt map onto the healpix grid!
-    coords=np.vstack((rapix,decpix)).T
-    x=np.arange(ttlen)
-    y=np.arange(naxis2)
+    #coords=np.vstack((rapix,decpix)).T
+    #x=np.arange(ttlen)
+    #y=np.arange(naxis2)
 
     #    x2d=np.tile(x,(naxis2,1))
     #    y2d=np.tile(np.reshape(y,(naxis2,1)),(1,ttlen))
@@ -132,25 +139,25 @@ def regrid(nside,inmap):
     #print 'temptt.shape is', temptt.shape
     #print 'first 500 values of temptt:',temptt[0:500]
 
-    r=hp.rotator.Rotator(coord=['G','C'])
-    theta_gal,phi_gal=r(theta,phi)
-    galpixnos=hp.pixelfunc.ang2pix(nside,theta_gal,phi_gal)
+    #r=hp.rotator.Rotator(coord=['G','C'])
+    #theta_gal,phi_gal=r(theta,phi)
+    #galpixnos=hp.pixelfunc.ang2pix(nside,theta_gal,phi_gal)
 
-    return temptt,galpixnos
+    return temptt#,galpixnos
 
 
 
-map,galpixnos=regrid(nside,input_file)
+map=regrid(nside,input_file) #galpixnos
 #map,galpixnos=regrid(nside,input_file, bin)
 
-if gal:
-    map_nest=hp.pixelfunc.reorder(map,r2n=True)
+#if gal:
+map_nest=hp.pixelfunc.reorder(map,r2n=True)
    
 
-else:
+#else:
 
-    map_gal=map[galpixnos] #comment out if the map is already in galactic
-    map_gal_nest=hp.pixelfunc.reorder(map_gal,r2n=True)
+    #map_gal=map[galpixnos] 
+    #map_gal_nest=hp.pixelfunc.reorder(map_gal,r2n=True)
     
 
  
@@ -158,17 +165,17 @@ else:
 
 
 #outfile=stokes+'cube_bin_'+str(bin)+'_nest_'+str(nside)+'.fits'
-outfile=stokes+'_bin'+str(bin)+'_nest_'+str(nside)+'.fits'
-#outfile='stockert_healpix.fits'
-if gal:
-    hp.mollview(map_nest,nest=True,min=3.0, max=4.0)
-    plt.show()
-    hp.write_map(outfile,map_nest,nest=True)
+#outfile=stokes+'_bin'+str(bin)+'_nest_'+str(nside)+'.fits'
+outfile=input_file.rsplit('.',1)[0]+'_healpix_nest_512.fits'
+#if gal:
+ #   hp.mollview(map_nest,nest=True,min=3.0, max=4.0)
+ #   plt.show()
+ #   hp.write_map(outfile,map_nest,nest=True)
 
-else:
-    hp.mollview(map_gal_nest,nest=True,min=3.0, max=4.0)
-    plt.show()
-    hp.write_map(outfile,map_gal_nest,nest=True)
+#else:
+hp.mollview(map_nest,nest=True)#,min=3.0, max=4.0)
+plt.show()
+hp.write_map(outfile,map_nest,nest=True)
 
     
 print 'Wrote map to ',outfile
