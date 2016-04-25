@@ -1,0 +1,28 @@
+import numpy as np
+from astropy.io import fits
+import sys
+
+ll_q1_map=fits.getdata('/local/scratch/GMIMS/gmims_drao_LL_Q1.fits')
+ll_q1_head=fits.getheader('/local/scratch/GMIMS/gmims_drao_LL_Q1.fits')
+
+ll_q2_map=fits.getdata('/local/scratch/GMIMS/gmims_drao_LL_Q2.fits')
+ll_q2_head=fits.getheader('/local/scratch/GMIMS/gmims_drao_LL_Q2.fits')
+
+ll_q3_map=fits.getdata('/local/scratch/GMIMS/gmims_drao_LL_Q3.fits')
+ll_q3_head=fits.getheader('/local/scratch/GMIMS/gmims_drao_LL_Q3.fits')
+
+ll_q4_map=fits.getdata('/local/scratch/GMIMS/gmims_drao_LL_Q4.fits')
+ll_q4_head=fits.getheader('/local/scratch/GMIMS/gmims_drao_LL_Q4.fits')
+
+rr_q1_map=fits.getdata('/local/scratch/GMIMS/gmims_drao_RR_Q1.fits')
+rr_q1_head=fits.getheader('/local/scratch/GMIMS/gmims_drao_RR_Q1.fits')
+
+rr_q2_map=fits.getdata('/local/scratch/GMIMS/gmims_drao_RR_Q2.fits')
+rr_q2_head=fits.getheader('/local/scratch/GMIMS/gmims_drao_RR_Q2.fits')
+
+rr_q3_map=fits.getdata('/local/scratch/GMIMS/gmims_drao_RR_Q3.fits')
+rr_q3_head=fits.getheader('/local/scratch/GMIMS/gmims_drao_RR_Q3.fits')
+
+rr_q4_map=fits.getdata('/local/scratch/GMIMS/gmims_drao_RR_Q4.fits')
+rr_q4_head=fits.getheader('/local/scratch/GMIMS/gmims_drao_RR_Q4.fits')
+

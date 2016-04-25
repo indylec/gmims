@@ -6,20 +6,28 @@ from astropy.io import ascii
 import matplotlib.pyplot as plt
 import sys
 
+hi_freq=1420000000.
+low_freq=408000000.
+
 
 coeffs_in=sys.argv[1]
-low_in=sys.argv[2]
-hi_in=sys.argv[3]
-low_name=sys.argv[4]
-hi_name=sys.argv[5]
+#low_in=sys.argv[2]
+#hi_in=sys.argv[3]
+low_name=sys.argv[2]
+hi_name=sys.argv[3]
+nside=int(sys.argv[4])
+nside_bigpix=int(sys.argv[5])
 
 
+npix_big= hp.nside2npix(nside_bigpix)
+npix=hp.nside2npix(nside)
+subpixno=npix/npix_big
 
 
 data=ascii.read(coeffs_in, guess=False, delimiter=' ')
 
 
-npix=hp.nside2npix(512)
+
 
 pixels=data['pixelno']
 #print pixels
@@ -32,7 +40,7 @@ good_regions=np.shape(data['pixelno'])
 goodno=int(good_regions[0])
 
 ipix=np.arange(npix)
-theta,phi=hp.pix2ang(512,ipix,nest=True)
+theta,phi=hp.pix2ang(nside,ipix,nest=True)
 
 t_matrix=np.zeros((npix,4))
 
@@ -49,10 +57,10 @@ t1=t_matrix[:,1]
 t2=t_matrix[:,2]
 t3=t_matrix[:,3]
 
-t0=np.reshape(t0,(192,16384))
-t1=np.reshape(t1,(192,16384))
-t2=np.reshape(t2,(192,16384))
-t3=np.reshape(t3,(192,16384))
+t0=np.reshape(t0,(npix_big,subpixno))
+t1=np.reshape(t1,(npix_big,subpixno))
+t2=np.reshape(t2,(npix_big,subpixno))
+t3=np.reshape(t3,(npix_big,subpixno))
 
 
 
@@ -76,18 +84,19 @@ a_matrix_monopole=np.vstack([-slope*t0_i,t0_i]).T
 a=a_matrix_monopole
 aa_inv=np.linalg.inv(np.matmul(a.T,a))
 atb=np.matmul(a.T,b.T)
-x=np.matmul(aa_inv,atb)
+x1=np.matmul(aa_inv,atb)
 
-#x,res,rank,sing=np.linalg.lstsq(a_matrix_monopole,b)
+x2,res,rank,sing=np.linalg.lstsq(a_matrix_monopole,b)
 
-print x
+print x1
+print x2
 #print res
 
-res=np.matmul(a,x.T)-b
+#res=np.matmul(a,x.T)-b
 
-print res
+#print res
 
-exit()
+#exit()
 
 
 
@@ -152,31 +161,42 @@ m23=x[7]
 m23_err=np.std(x_bootstrap_8[:,7])
 
 
-#generate fits, corrected maps, and output everything
+#generate fits, corrected maps, spectral index and output everything
 
-low,lowheader=hp.read_map(low_in,nest=True,h=True)
-if low_name=='haslam':
-    low -= 5.8
-elif low_name=='stockert':
-    low -= 2.8
+slope_betamap=np.ones(npix_big)*hp.UNSEEN
 
-hi,hiheader=hp.read_map(hi_in,nest=True,h=True)
-if hi_name=='stockert':
-    hi-=2.8
+spec_index=np.log10(slope)/np.log10(1420000000./408000000.)
 
-fit_low=(m10+np.cos(phi)*np.sin(theta)*m11+np.sin(theta)*np.sin(phi)*m12+np.cos(theta)*m13)
+for iii in range(goodno):
+    slope_betamap[[pixels[iii]]]=np.log10(slope[iii])/np.log10(hi_freq/low_freq)
 
-fit_hi=(m20+np.cos(phi)*np.sin(theta)*m21+np.sin(theta)*np.sin(phi)*m22+np.cos(theta)*m23)
+slope_betamap_out=low_name+'-'+hi_name+'_spec_index_coeff.fits'
 
-low_corrected=low-fit_low
-hi_corrected=hi-fit_hi
+hp.write_map(slope_betamap_out,slope_betamap,nest=True)
 
-low_corrected_out=low_name+'_'+coeffs_in.rsplit('.',1)[0]+'_simple_corrected.fits'
-hi_corrected_out=hi_name+'_'+coeffs_in.rsplit('.',1)[0]+'_corrected.fits'
+#low,lowheader=hp.read_map(low_in,nest=True,h=True)
+#if low_name=='haslam':
+#    low -= 5.8
+#elif low_name=='stockert':
+#    low -= 2.8
+
+#hi,hiheader=hp.read_map(hi_in,nest=True,h=True)
+#if hi_name=='stockert':
+#    hi-=2.8
+
+#fit_low=(m10+np.cos(phi)*np.sin(theta)*m11+np.sin(theta)*np.sin(phi)*m12+np.cos(theta)*m13)
+
+#fit_hi=(m20+np.cos(phi)*np.sin(theta)*m21+np.sin(theta)*np.sin(phi)*m22+np.cos(theta)*m23)
+
+#low_corrected=low-fit_low
+#hi_corrected=hi-fit_hi
+
+#low_corrected_out=low_name+'_'+coeffs_in.rsplit('.',1)[0]+'_simple_corrected.fits'
+#hi_corrected_out=hi_name+'_'+coeffs_in.rsplit('.',1)[0]+'_corrected.fits'
 #low_corrected_pdf=gmims_in.rsplit('.',1)[0]+'_corrected.pdf'
 
-low_fit_out=low_name+'_'+coeffs_in.rsplit('.',1)[0]+'simple_fit.fits'
-hi_fit_out=hi_name+'_'+coeffs_in.rsplit('.',1)[0]+'_fit.fits'
+#low_fit_out=low_name+'_'+coeffs_in.rsplit('.',1)[0]+'simple_fit.fits'
+#hi_fit_out=hi_name+'_'+coeffs_in.rsplit('.',1)[0]+'_fit.fits'
 #fit_pdf=gmims_in.rsplit('.',1)[0]+'_fit.pdf'
 
 #fig1=plt.figure(figsize=(8,5),dpi=150)
@@ -189,10 +209,10 @@ hi_fit_out=hi_name+'_'+coeffs_in.rsplit('.',1)[0]+'_fit.fits'
 #plt.savefig(corrected_pdf,dpi=150, bbox_inches="tight")
 #plt.show()
 
-hp.write_map(low_corrected_out,low_corrected,nest=True)
-hp.write_map(hi_corrected_out,hi_corrected,nest=True)
-hp.write_map(low_fit_out, fit_low, nest=True)
-hp.write_map(hi_fit_out, fit_hi, nest=True)
+#hp.write_map(low_corrected_out,low_corrected,nest=True)
+#hp.write_map(hi_corrected_out,hi_corrected,nest=True)
+#hp.write_map(low_fit_out, fit_low, nest=True)
+#hp.write_map(hi_fit_out, fit_hi, nest=True)
 
 coeffs_out=coeffs_in.rsplit('.',1)[0]+'_simple_dipoles.txt'
 

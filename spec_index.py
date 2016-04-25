@@ -17,6 +17,7 @@ data=ascii.read(coeffs_in, guess=False, delimiter=' ')
 g0_freq=1300855232.
 g8_freq=1689233472.
 haslam_freq=408000000.
+stockert_freq=1420000000.
 
 npix=hp.nside2npix(4)
 

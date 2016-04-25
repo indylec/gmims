@@ -1,0 +1,15 @@
+import numpy as np
+import healpy as hp
+import matplotlib.pyplot as plt
+from setup_matplotlib import *
+import sys
+
+map_in=sys.argv[1]
+vmin=float(sys.argv[2])
+vmax=float(sys.argv[3])
+
+map=hp.read_map(map_in,nest=True)
+
+hp.mollview(map,nest=True,min=vmin,max=vmax)
+
+plt.show()

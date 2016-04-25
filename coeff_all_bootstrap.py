@@ -25,8 +25,8 @@ haslam_unseen=np.where(haslam==hp.UNSEEN)
 haslam[haslam_unseen]=float('NaN')
 if lo_name=='stockert':
     haslam -= 2.8
-#elif lo_name=='haslam':
-    #haslam -= 5.8
+elif lo_name=='haslam':
+    haslam -= 5.8
 
 #Order the map arrays into rows each containing the number of pixels in one nside=4 pixel
 gmims0_div=np.reshape(gmims0,(192,16384))

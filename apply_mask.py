@@ -5,7 +5,8 @@ import healpy as hp
 import sys
 
 inmap=sys.argv[1]
-inmask=sys.argv[2]
+binno=sys.argv[2]
+inmask=sys.argv[3]
 #mask_name=sys.argv[3]
 
 map=hp.read_map(inmap, nest=True)
@@ -14,6 +15,8 @@ mask=hp.read_map(inmask, nest=True)
 map[np.where(mask==0.0)]=hp.UNSEEN
 map[np.where(map==0.0)]=hp.UNSEEN
 
-#outfile=inmap.rsplit('.',1)[0]+'_'+mask_name+'_masked.fits'
+#outfile=inmap.rsplit('.',1)[0]+'_'+mask_name+'.fits'
 
-hp.write_map(inmap, map,nest=True )
+outfile='g'+binno+'g_512.fits'
+
+hp.write_map(outfile, map,nest=True )

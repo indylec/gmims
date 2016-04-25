@@ -203,18 +203,7 @@ low=hp.ud_grade(low,nside_out=256,pess=True, order_in='NESTED', order_out='NESTE
 #hp.mollview(lowmap_dg,nest=True)
 #plt.show()
 #exit()
-if low_name=='haslam':
-    low-=2.7
-elif low_name=='haslam-wdipole':
-    w_matrix=np.empty((npix_map,4))
-    w_matrix[:,0]=1.0
-    for i in range (npix_map):
-        w_matrix[i,1:]=hp.pix2vec(nside_map,i,nest=True)
-    w_coeffs=np.asarray([8.9,3.2,0.7,-0.8])
-    wdipole=np.matmul(w_matrix,w_coeffs)
-
-    low-=wdipole
-
+#if low_name=='haslam':
 #    low_freq = 408000000.
 #elif low_name=='stockert_adjusted':
 #    low_freq = 1420000000.
@@ -295,7 +284,7 @@ coeffs_out=coeffs_in.rsplit('.',1)[0]+'_single_dipole.txt'
 f=open(coeffs_out,'a')
 f.write('################ MONOPOLE + DIPOLE COEFFICIENTS###################\n')
 #f.write('#First row is '+low_name+', second is '+hi_name+'\n')
-f.write('#Coefficients for gmims'# {0} \n'.format(low_name))
+f.write('#Coefficients for {0} \n'.format(low_name))
 f.write('x0 x1 x2 x3 x0err x1err x2err x3err \n')
 f.write(str(m10)+' '+str(m11)+' '+str(m12)+' '+str(m13)+' '+str(m10_err)+' '+str(m11_err)+' '+str(m12_err)+' '+str(m13_err)+'\n')
 #f.write(str(m20)+' '+str(m21)+' '+str(m22)+' '+str(m23)+' '+str(m20_err)+' '+str(m21_err)+' '+str(m22_err)+' '+str(m23_err)+'\n')

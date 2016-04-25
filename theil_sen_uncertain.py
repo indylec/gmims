@@ -11,7 +11,8 @@ Very robust to outliers.
 import numpy as np
 import bottleneck #very fast searching and sorting written in Cython.
 import itertools
-import matplotlib.pyplot as plt
+from scipy.misc import comb
+#import matplotlib.pyplot as plt
 
 def theil_sen(x,y, sample= "auto", n_samples = 1e7):
     """
@@ -34,13 +35,18 @@ def theil_sen(x,y, sample= "auto", n_samples = 1e7):
     
     if n < 100 or not sample:
         ix = np.argsort( x )
-        slopes = np.empty( n*(n-1)*0.5 )
+        slopes = np.empty( int(n*(n-1)*0.5) )
        # print '...calculating slopes...'
         for c, pair in enumerate(itertools.combinations( range(n),2 ) ): #it creates range(n) =( 
             i,j = ix[pair[0]], ix[pair[1]]
             slopes[c] = slope( x[i], x[j], y[i],y[j] )
         #print 'slope min and max are:',np.amin(slopes),np.amax(slopes)
+        rank_up=int(0.5*int(comb(n,2))+1.96 * np.sqrt(n*(n-1.)*(2.*n-5.)/18.)+1.)
+        rank_low=int(0.5*int(comb(n,2))- 1.96 * np.sqrt(n*(n-1.)*(2.*n-5.)/18.))
         #c95=np.percentile(slopes,(5,95))
+        slopes_sort=np.sort(slopes)
+        slope_up=slopes_sort[rank_up]
+        slope_low=slopes_sort[rank_low]
     else:
         i1 = np.random.randint(0,int(n), int(n_samples))
         i2 = np.random.randint(0,int(n), int(n_samples))
@@ -69,7 +75,7 @@ def theil_sen(x,y, sample= "auto", n_samples = 1e7):
    
     intercept_ = bottleneck.median( intercepts )
 
-    return np.array( [slope_,intercept_] )
+    return np.array( [slope_,intercept_,slope_up, slope_low] )
         
         
         

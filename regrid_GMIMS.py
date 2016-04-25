@@ -12,8 +12,8 @@ input_file=sys.argv[1]
 nside=int(sys.argv[2])
 zero_middle=int(sys.argv[3])
 scale=int(sys.argv[4])
-#stokes=sys.argv[3]
-#bin=int(sys.argv[4])
+stokes=sys.argv[5]
+bin=int(sys.argv[6])
 #gal=int(sys.argv[5])
 
 
@@ -165,8 +165,8 @@ map_nest=hp.pixelfunc.reorder(map,r2n=True)
 
 
 #outfile=stokes+'cube_bin_'+str(bin)+'_nest_'+str(nside)+'.fits'
-#outfile=stokes+'_bin'+str(bin)+'_nest_'+str(nside)+'.fits'
-outfile=input_file.rsplit('.',1)[0]+'_healpix_nest_512.fits'
+outfile=stokes+'_bin'+str(bin)+'_nest_'+str(nside)+'.fits'
+#outfile=input_file.rsplit('.',1)[0]+'_healpix_nest_512.fits'
 #if gal:
  #   hp.mollview(map_nest,nest=True,min=3.0, max=4.0)
  #   plt.show()

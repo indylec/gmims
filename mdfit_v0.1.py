@@ -132,14 +132,20 @@ b=offset[pix]
 
 A=np.empty((numval,8))
 
-A[:,:4]=-slope*T
-A[:,4:]=T
+for i in range(4):
+    A[:,i]=-slope*T[:,i]
+    
+for i in range(4):
+    A[:,i+4]=T[:,i]
 
-print A.shape
 
-x,res,rank,sing=np.linalg.lstsq(A,b)
+#print A.shape
 
-print x
+x,resx,rank,sing=np.linalg.lstsq(A,b)
+
+print "x= ",x
+
+res=np.matmul(A,x.T)-b
 
 mu_res=np.mean(res)
 sigma_res=np.sqrt(np.var(res))
@@ -157,8 +163,73 @@ np.save("md_b",b)
 np.save("md_x",x)
 np.save("md_pix",pix)
 
+print "Starting mcmc search..."
 
-md=np.zeros()
+md_tot=np.zeros(8)
+
+def dist(md):
+
+    for i in range (int(npos)):
+        if b_pos[i]-np.sum(A_pos[i,:]*(md_tot+md)) < 0.0:
+            return 1.E30
+
+    distance=np.sum((np.matmul(A,md)-b)**2)
+    return distance
+
+def mcmc_search(md):
+
+    n=int(md.size)
+    m=1000000
+    mcmc_rms=1.E-2
+    dp=np.ones(n)*mcmc_rms
+
+    p0=md
+    d0=dist(p0)
+
+    #while d0 == 1.E30:
+        #for
+
+    p=p0
+    accept=np.zeros(n)
+    reject=np.zeros(n)
+
+    for i in range(1,m):
+        for j in range(n):
+            p[j]=p0[j]+dp[j]*np.random.randn()
+
+            d=dist(p)
+
+            if d<d0:
+                p0=p
+                d0=d
+                accept[j]=accept[j]+1
+                
+            else:
+                reject[j]=reject[j]+1
+                
+
+        if np.mod(i,1E4) == 0:
+            print "i = ",i
+            print "p0 = ", p0
+            print "d0 = ",d0
+            print "accept = ",accept
+            print "reject = ",reject
+            if all(accept==0):
+                if all(dp>0.01*mcmc_rms):
+                    dp=0.5*dp
+                else:
+                    exit()
+            accept[:]=0
+            reject[:]=0
+    md=p0
+
+    return md
+
+
+md=np.zeros(8)
+md=mcmc_search(md)
+
+print "mc_md = ",mc_md
 
 #exit()
     

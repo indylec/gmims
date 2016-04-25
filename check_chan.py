@@ -34,37 +34,49 @@ for i in range(nchan):
 fig=plt.figure(figsize=(10,6))
 ax=fig.add_subplot(111)
 
-ax.plot(chans,means,'-k', label="Mean value")
-ax.plot(chans,medians, '-b',label="Median value")
+ax.plot(chans,means,'k-', label="Mean value")
+ax.plot(chans,medians, 'k--',label="Median value")
+
+#add bin limits here, hard-coded
+
+bins_list=np.asarray([205,410,615,820,1025,1230,1435,1640,1845,2047])
+
+for i in range(bins_list.shape[0]):
+    ax.axvline(x=bins_list[i], color='k',linestyle='dotted',alpha=0.8)
+    ax.text(bins_list[i]-105,0.02,str(i))
+    
+
+ax.set_xlim([np.amin(chans),np.amax(chans)])
 
 ax.set_xlabel("Channel number")
 ax.set_ylabel("Brightness temp. (K)")
 
-if stokes_in=='TP':
-   texty=0.1
-elif stokes_in=='Q':
-    texty=-0.02
-elif stokes_in=='U':
-    texty=-0.02
-else:
-    texty=0.05
+#if stokes_in=='TP':
+#   texty=0.1
+#elif stokes_in=='Q':
+#    texty=-0.02
+#elif stokes_in=='U':
+#    texty=-0.02
+#else:
+#    texty=0.05
 
-ax.text(2300,texty,stokes_in)
+
 
 
 ax2=ax.twiny()
 
 freqs=((np.arange(nchan)-refpix)*df+f0)/1E9
 
-ax2.plot(freqs,means,color="black",marker="None", ls="None")
-ax2.plot(freqs,medians,color="black",marker="None", ls="None")
+ax2.plot(freqs,means,color="blue",marker="None", ls="None")
+ax2.plot(freqs,medians,color="blue",marker="None", ls="None")
 ax2.set_xlabel("Frequency (GHz)")
+ax2.set_xlim([np.amin(freqs),np.amax(freqs)])
 
 ax.legend(loc=0)
 
-#plt.show()
+plt.show()
 
-plt.savefig("plots/means_medians_"+stokes_in+".pdf", dpi=200, bbox_inches="tight")
+plt.savefig("plots/means_medians_"+stokes_in+"_bins_corrected.pdf", dpi=200, bbox_inches="tight")
 
 
 

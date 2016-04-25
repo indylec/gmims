@@ -30,9 +30,9 @@ haslam[haslam_unseen]=float('NaN')
  #   haslam -= 5.8
 
 #Order the map arrays into rows each containing the number of pixels in one nside=4 pixel
-gmims0_div=np.reshape(gmims0,(3072,16**2))
+gmims0_div=np.reshape(gmims0,(192,16384))
 #gmims8_div=np.reshape(gmims8,(192,4096))
-haslam_div=np.reshape(haslam,(3072,16**2))
+haslam_div=np.reshape(haslam,(192,16384))
 
 #find pixels which are good for both maps
 
