@@ -38,8 +38,6 @@ print b.shape
 #good_regions=np.shape(data['pixelno'])
 #goodno=int(good_regions[0])
 
-
-
 t_matrix=np.empty((npix_region,4))
 t_matrix[:,0]=1.0
 
